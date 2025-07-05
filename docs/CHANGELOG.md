@@ -2,11 +2,11 @@
 
 ## 2025-07-05
 
-Extended retention duration to 30 days in Bronze Patients and Encounters Delta
-tables using 'delta.changeDataFeed.retentionDuration' = '30 days'.
-
-Added .option("mergeSchema","true") to Silver Encounters writeStream, and
-renamed START to START_DATE for clarity - .withColumnRenamed("DATE", "START_DATE").
+Refactored the Silver encounters pipeline to preserve all unique `EncounterID` rows
+by removing unnecessary deduplication logic. Added `.withColumnRenamed("DATE", "START_DATE")`
+for clarity and used `.partitionBy("START_DATE")` in the writeStream. Also enabled
+schema evolution with `.option("mergeSchema", "true")` to support nullable column
+additions during testing.
 
 ## 2025-07-04
 
