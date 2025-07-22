@@ -2,13 +2,17 @@
 
 ## 2026-07-21
 
-Create .env and remove hardcoded variables from infra files.
+Created three modules:
+- config.py centralizes all paths, table names, checkpoint locations,
+schema paths.
+- display_utils.py handles formatting and printing of results.
+- validation_utils.py handles all the core logic used in validation notebooks.
+
+Created .env file and removed hardcoded variables from infrastructure scripts.
+
+Standardized notebook output with color-coded summaries to improve readability.
 
 ## 2025-07-20
-
-Deleted the device dataset. Replaced the feedback dataset with a provider-centric
-schema using provider_id as a clean foreign key to providers.ProviderID. Converted
-claims.csv to Parquet for better ingestion speed and schema control.
 
 Implemented full feedback pipeline from raw JSONL in ADLS to Bronze (Auto Loader),
 Silver (batch append), and Gold (aggregated satisfaction metrics). Overhauled the Silver and Gold layers.
@@ -26,6 +30,10 @@ Reorganized Gold into four targeted fact tables:
 - gold_provider_rolling_spend: Daily provider spend and 7-day rolling KPIs using window functions
 
 Existing QA views were removed from Gold.
+
+Deleted the device dataset. Replaced the feedback dataset with a provider-centric
+schema using provider_id as a clean foreign key to providers.ProviderID. Converted
+claims.csv to Parquet.
 
 ## 2025-07-19
 
