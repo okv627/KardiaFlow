@@ -34,8 +34,9 @@ databricks secrets create-scope "$PROFILE" \
   --initial-manage-principal users \
   --profile "$PROFILE" 2>/dev/null || true
 
-# --- 7. Generate a 24h SAS token for ADLS 'raw' container ---
-SAS_EXPIRY="$(date -u -d '+1 day' '+%Y-%m-%dT%H:%MZ' 2>/dev/null || gdate -u -d '+1 day' '+%Y-%m-%dT%H:%MZ')"
+# --- 7. Generate a SAS token for ADLS 'raw' container (write-enabled) ---
+# Default: 180 days, permissions racwdl (read, add, create, write, delete, list)
+SAS_EXPIRY="$(date -u -d '+180 days' '+%Y-%m-%dT%H:%MZ' 2>/dev/null || gdate -u -d '+180 days' '+%Y-%m-%dT%H:%MZ')"
 CONN_STR="$(az storage account show-connection-string \
   --resource-group "$RG" \
   --name "$ADLS" -o tsv)"
@@ -43,7 +44,7 @@ CONN_STR="$(az storage account show-connection-string \
 RAW_SAS="$(az storage container generate-sas \
   --connection-string "$CONN_STR" \
   --name            "$CONT" \
-  --permissions     rl \
+  --permissions     racwdl \
   --expiry          "$SAS_EXPIRY" \
   --https-only      \
   --output          tsv)"
