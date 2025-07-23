@@ -1,6 +1,6 @@
 [project]
 name = "kflow"
-version = "0.1.0"        # bump when you rebuild & push a new wheel
+version = "0.1.1"        # bump when you rebuild & push a new wheel
 description = "Shared utilities for KardiaFlow ETL pipelines"
 readme = "README.md"
 requires-python = ">=3.10"
