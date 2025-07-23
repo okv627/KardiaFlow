@@ -1,4 +1,4 @@
-# KardiaFlow Project — Changelog
+# Kardiaflow Project — Changelog
 
 ## 2025-07-23
 
@@ -11,7 +11,7 @@ badges, trust scores, freshness labels).
 The specification outlines QF’s goals, architecture (Evidence Bundle + Proof Indicators),
 implementation phases, and metadata schema (e.g., `dq_score`, `fingerprint`, `masked_fields`).
 
-This marks the beginning of integrating PoD into KardiaFlow as a first-class trust communication layer.
+This marks the beginning of integrating PoD into Kardiaflow as a first-class trust communication layer.
 
 Refactory notebook directory. Each Medallion layer now has its own folder, with pipeline
 folders within each layer.
@@ -146,7 +146,7 @@ on ClaimID, and moved the merge logic into a clean upsert_to_silver function.
 ## 2025-07-15
 
 Implemented and validated the full Silver and Gold layers of the claims and providers
-pipeline in KardiaFlow. The Silver layer includes a Type-1 upsert for claims using CDF
+pipeline in Kardiaflow. The Silver layer includes a Type-1 upsert for claims using CDF
 and a Type-2 SCD merge for providers to preserve history.
 
 Added three Gold tables using a SQL-based notebook. The hourly Claims table aggregates
@@ -371,7 +371,7 @@ The patients + encounters pipeline now matches the intended design and is fully 
 
 ## 2025-06-29
 
-Completed the patients branch of the KardiaFlow pipeline.  
+Completed the patients branch of the Kardiaflow pipeline.  
 * Created dedicated landing folders (`dbfs:/kardia/raw/patients/`, `…/encounters/`) plus shared roots for schema tracking (`/kardia/_schemas/`) and stream checkpoints (`/kardia/_checkpoints/`).  
 * Added a 10-row smoke test file.
 * Implemented an Auto Loader Bronze stream with a fixed `StructType`, schema-drift tracking, and `delta.
@@ -404,7 +404,7 @@ dashboarding.
 
 Raw -> Gold View Pipeline Complete (in local Dev)
 
-Today we finalized the KardiaFlow architecture, integrating batch and streaming
+Today we finalized the Kardiaflow architecture, integrating batch and streaming
 PHI-compliant ETL paths and clarifying ingestion options like Auto Loader and
 COPY INTO. We validated a raw 100-row CSV, ingested it into a Bronze Delta
 table with Change Data Feed enabled, then transformed it to a schema-enforced,
@@ -415,7 +415,7 @@ runs seamlessly in both local and Databricks environments.
 
 ## 2025-06-22
 
-Completed Phase 1 and began Phase 2 of KardiaFlow by deploying safe,
+Completed Phase 1 and began Phase 2 of Kardiaflow by deploying safe,
 cost-controlled infrastructure and validating an initial data pipeline run.
 Used `deploy.bicep` to provision Azure Databricks (public-only, no VNet),
 Key Vault (soft-delete enabled, purge protection off), and Azure Data Factory.
@@ -441,7 +441,7 @@ fast iteration, and teardown-safe development.
 
 After uncovering substantial and silently accumulating costs tied to ADLS Gen2
 transaction billing, NAT Gateway persistence, and unremovable infrastructure
-triggered by Unity Catalog's Access Connector, the KardiaFlow environment
+triggered by Unity Catalog's Access Connector, the Kardiaflow environment
 (`kardiaflow-rg`) was systematically dismantled. Despite having Owner-level
 permissions, key resources remained locked behind deny assignments automatically
 applied during Unity Catalog provisioning. This prevented deletion of the
@@ -559,7 +559,7 @@ Performance-wise, the script successfully ingested over **133,000** patient reco
 
 ## 2025-05-29
 
-Today marked the foundational setup of the KardiaFlow project’s infrastructure and datasets. An Azure account was created and provisioned with both **Azure Data Factory** and **Azure Databricks**, using the East US region to avoid quota limitations. These services will form the backbone of our orchestration and transformation layers.
+Today marked the foundational setup of the Kardiaflow project’s infrastructure and datasets. An Azure account was created and provisioned with both **Azure Data Factory** and **Azure Databricks**, using the East US region to avoid quota limitations. These services will form the backbone of our orchestration and transformation layers.
 
 Simultaneously, the local development environment was established using Docker containers for **PostgreSQL**, **MongoDB**, **Oracle XE**, and **SQL Server**. Each of these databases was configured to simulate realistic hybrid healthcare systems, and connection scripts were written in Python to validate access to all services. These scripts were organized under `automation/db_checks/`, and results were logged to `docs/environment_check.md`.
 

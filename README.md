@@ -1,8 +1,8 @@
-# KardiaFlow: Azure-Based Healthcare Data Platform
+# Kardiaflow: Azure-Based Healthcare Data Platform
 
 ## Scenario
 
-KardiaFlow simulates a real-world healthcare data platform built on Azure Databricks and Delta Lake. It demonstrates a modular, streaming-capable ETL architecture that handles structured (CSV, Avro, TSV) and semi-structured (JSON) healthcare datasets using a medallion design pattern.
+Kardiaflow simulates a real-world healthcare data platform built on Azure Databricks and Delta Lake. It demonstrates a modular, streaming-capable ETL architecture that handles structured (CSV, Avro, TSV) and semi-structured (JSON) healthcare datasets using a medallion design pattern.
 
 The pipeline ingests raw files into Bronze Delta tables using Auto Loader, applies data masking and CDC logic in the Silver layer with Delta Change Data Feed (CDF), and materializes analytics-ready Gold views for reporting and dashboards.
 
@@ -10,7 +10,7 @@ The pipeline ingests raw files into Bronze Delta tables using Auto Loader, appli
 
 The following diagram illustrates the end-to-end data flow across ingestion, transformation, validation, and secure storage:
 
-![KardiaFlow Architecture](https://raw.githubusercontent.com/okv627/KardiaFlow/master/docs/assets/kflow_lineage.png?v=2)
+![Kardiaflow Architecture](https://raw.githubusercontent.com/okv627/Kardiaflow/master/docs/assets/kflow_lineage.png?v=2)
 
 ### Data Sources
 

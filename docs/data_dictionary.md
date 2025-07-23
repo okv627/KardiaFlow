@@ -1,4 +1,4 @@
-# Data Dictionary: KardiaFlow Synthetic Healthcare Dataset
+# Data Dictionary: Kardiaflow Synthetic Healthcare Dataset
 
 ## Source Files
 

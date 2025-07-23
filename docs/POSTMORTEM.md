@@ -2,7 +2,7 @@
 
 ## Incident Summary
 
-In May 2025, an early version of the KardiaFlow project was deployed to Azure as part of a simulated healthcare data engineering pipeline. This version provisioned persistent infrastructure including Azure Data Lake Storage Gen2 (ADLS), Azure Data Factory (ADF), Databricks, and network-bound services such as a Self-Hosted Integration Runtime (SHIR). 
+In May 2025, an early version of the Kardiaflow project was deployed to Azure as part of a simulated healthcare data engineering pipeline. This version provisioned persistent infrastructure including Azure Data Lake Storage Gen2 (ADLS), Azure Data Factory (ADF), Databricks, and network-bound services such as a Self-Hosted Integration Runtime (SHIR). 
 
 Over the course of several development iterations, the project accrued over **$250 USD in unexpected Azure charges**—despite only handling synthetic CSV files and running short-term tests.
 
@@ -42,13 +42,13 @@ Over the course of several development iterations, the project accrued over **$2
 
 I destroyed all existing RGs and terminated the Azure subscription to prevent further leakage. I saved all scripts and synthetic datasets locally. A new Azure subscription was created with zero resources provisioned.
 
-I then rearchitected KardiaFlow from the ground up with **cost hygiene and teardown safety as first-class goals**.
+I then rearchitected Kardiaflow from the ground up with **cost hygiene and teardown safety as first-class goals**.
 
 ---
 
 ## Redesign Strategy: “Safe Mode Data Engineering”
 
-The new KardiaFlow project is designed around several non-negotiable constraints:
+The new Kardiaflow project is designed around several non-negotiable constraints:
 
 | Constraint                        | Implementation                                                                 |
 |----------------------------------|--------------------------------------------------------------------------------|
@@ -67,7 +67,7 @@ The new KardiaFlow project is designed around several non-negotiable constraints
 
 This postmortem and the resulting architecture show not just the ability to build data engineering systems—but the ability to run them safely in cloud environments where **cost is a risk surface**.
 
-KardiaFlow now simulates:
+Kardiaflow now simulates:
 - Healthcare-grade ingestion and PHI masking
 - Full infra-as-code provisioning
 - Safe teardown

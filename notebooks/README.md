@@ -1,4 +1,4 @@
-# KardiaFlow: Unified Health Data Pipeline
+# Kardiaflow: Unified Health Data Pipeline
 
 This project ingests synthetic healthcare data into a Databricks Lakehouse using **Delta Lake**, **Auto Loader**, and a scalable **medallion architecture** (Bronze → Silver → Gold). It supports two core domains:
 
