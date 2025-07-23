@@ -34,8 +34,7 @@ az deployment group create \
 
 # 4. Generate PAT via Databricks UI.
 
-# 5. Export PAT via local IDE:
-export DATABRICKS_PAT=""
+# 5. Add PAT to environment variables DATABRICKS_PAT=""
 
 # 6. Generate & store SAS in Databricks:
 bash infra/gen_sas.sh

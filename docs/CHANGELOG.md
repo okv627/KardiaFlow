@@ -1,6 +1,26 @@
 # KardiaFlow Project — Changelog
 
-## 2026-07-21
+## 2025-07-22
+
+**Major Refactor and Modularization**
+
+- **Refactored all pipeline layers** (`bronze` → `validation` → `silver` → `gold`)
+- **Created `src/kflow/` module** containing reusable shared utilities:
+  - `config.py` – centralizes constants and path generators
+  - `adls.py` – ADLS helpers for bootstrapping and file movement
+  - `display_utils.py` – standardized banners and formatted output
+  - `etl_utils.py` – shared stream/batch write patterns
+  - `validation_utils.py` – schema checks and audit validations
+- **Moved file utilities to global scope**:
+  - `bootstrap_raw`
+  - `move_new_files`
+- **Standardized notebook patterns**:
+  - Unified checkpointing and path logic via config
+  - Consistent use of audit columns and validation
+  - Reduced noise using helper functions across all layers
+- **Moved all hardcoded values** out of `infra/gen_sas.sh` and `teardown.sh` into `.env`
+
+## 2025-07-21
 
 Created three modules:
 - config.py centralizes all paths, table names, checkpoint locations,
