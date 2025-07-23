@@ -39,7 +39,12 @@ az deployment group create \
 # 6. Generate & store SAS in Databricks:
 bash infra/gen_sas.sh
 
-# 7. Teardown Instructions. To safely destroy all provisioned resources, run:
+# 7. Build & push the kflow wheel into the workspace. This will build the wheel using pyproject.toml and upload it to /Workspace/Shared/libs/ in the Databricks Workspace. Run:
+bash infra/build_push_kflow.sh
+
+# 8. Attach the wheel to the cluster. Manually: Go to Compute > Cluster > Libraries > Install → attach the wheel from /Shared/libs/kflow-0.1.0-py3-none-any.whl
+
+# 8. Teardown Instructions. To safely destroy all provisioned resources, run:
 ./infra/teardown.sh
 
 The teardown script script will:
