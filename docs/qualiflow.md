@@ -1,337 +1,78 @@
-# Qualiflow  
+# Qualiflow
 
-## A Framework for Visible, Portable Data Trust  
+## A Practical Pattern for Transparent Data Trust
 
-*Qualiflow is a data trust framework that embeds portable, evidence-based metadata directly into data products — making freshness, quality, privacy, and lineage transparent to every stakeholder.*
+*Qualiflow adds a lightweight, structured summary to each dataset—capturing when it was refreshed, how it was built, whether it passed validation, and what privacy protections were applied.*
 
-**Goal:**  
-To democratize data quality metrics by making a **tiered view of evidence**  
-available to all stakeholders—at the level of depth they need—bundled with the  
-data artifact and delivered to the consumption point as one package.
+### Purpose
 
----
-
-**Qualiflow defines a display protocol** that defines:
-
-- What metadata to store  
-- How to score and evaluate it  
-- How to present it consistently wherever the data is served
-
-This shifts **data reliability** from a backend/internal concern to a  
-**first-class component of user experience**.
+Details like validation results, lineage, and privacy enforcement are often buried in logs or scattered across systems. Qualiflow surfaces these signals at the point of use by attaching a clear, machine-readable summary to each dataset.
 
 ---
 
-### Why It Matters
+# Core Design
 
-Today, metadata and quality checks often live in disconnected systems—  
-observability platforms, data catalogs, pipeline logs, etc.
+Qualiflow has two main layers: a **machine-readable trust summary** and a **human-facing trust indicator**.
 
-With **Qualiflow**, the **proof artifacts travel with the data itself**.  
-The result is a single, transparent artifact:  
-the **evidence bundle and its visual indicators**.
+## Trust Summary (Machine Layer)
 
-Stakeholders get:
+> A structured JSON object generated during each Gold-table refresh, capturing key metadata such as freshness, validation results, schema contract status, privacy actions, and reproducibility context.
 
-- A simple **indicator of trust**
-- The ability to **self-serve deeper context** if needed
+Each summary is stored in a centralized Delta table (e.g., `kardia_meta.qualiflow_summaries`), keyed by `dataset_id` and timestamp. Datasets may reference the summary via a fingerprint column (e.g., `_qf_fingerprint`).
 
----
+### Included Metadata
 
-### Key Features
+- **Lineage**: Input tables, source systems, job ID, Git SHA
+- **Freshness**: Ingestion timestamp, load timestamp, pipeline latency, SLA status
+- **Validation**: Test results (pass/fail), data quality score, optional metrics (e.g., null %, value drift)
+- **Schema Contract**: Schema version or hash, contract compliance
+- **Privacy**: Masked fields, policy ID, percent masked
+- **Fingerprint**: Deterministic hash of Delta version and code version
+- **Ownership**: Generation timestamp, pipeline ID, team contact
 
-- **Readable, Simplified Trust Signals:**  
-  Instead of random metadata like null percentages, Qualiflow emphasizes  
-  clean scores, quality grades, and visual badges
+> This metadata powers dynamic trust indicators in dashboards, notebooks, and validation reports—without requiring direct access to pipeline internals.
 
-- **Reproducibility Fingerprint:**  
-  A unique ID representing the exact code and data state—  
-  useful for engineers who may need to fetch logs or rerun the pipeline
-
-- **Privacy Badge with Detail:**  
-  Goes beyond “compliant” to show **what was done** to protect sensitive data
-
-> Example:  
-> _“Privacy: Masked 2 fields (Name, SSN) under Policy HIPAA-PrivacyRule-1,  
-> resulting in 12% of values masked.”_
+**Examples**  
+- `latency_seconds = 20` vs SLA `900` → **Freshness: Green**  
+- `tests_failed = 0`, `dq_score = 98.7` → **Quality: A**  
+- `contract.status = OK` → **Schema v3.1**  
+- `privacy.masked_fields` present → **Privacy: Masked**
 
 ---
 
-# Qualiflow Has Two Main Layers
+## Trust Indicators (Human Layer)
+
+> Lightweight UI signals embedded in dashboards, notebooks, or queries—designed to surface freshness, quality, privacy, and reproducibility context clearly and concisely.
+
+Trust indicators translate metadata into intuitive visuals using progressive disclosure. Business users see quick status indicators; technical users can drill into validation details, lineage, and masking logic.
+
+### Common Elements
+
+- **Status Badge**: Green/yellow/red based on SLOs or test results  
+- **Freshness Label**: `"Fresh (15m)"`, `"Stale"`, or `"Updated 2h ago"`  
+- **Quality Summary**: `"98% quality (12/12 tests passed)"`  
+- **Privacy Notice**: `"PII masked: Yes (2 fields)"`, with policy ID  
+- **Schema Tag**: `"Schema v3.1"` or `"Contract: Compliant"`  
+- **Fingerprint**: Short hash for traceability  
+- **Lineage Link**: Optional UI for job and table ancestry
 
 ---
 
-## Evidence Bundle (Machine Layer)
+## Implementation in KardiaFlow
 
-> **This is the machine-readable layer.**  
-> Each evidence bundle is generated by **Qualiflow** and **encoded in the Evidence Bundle Protocol (EBP)** — a machine-readable JSON standard that captures freshness, quality, lineage, privacy, and reproducibility metadata.
+Within KardiaFlow, Qualiflow is implemented in Gold-layer refresh pipelines. Each run generates a standardized JSON summary using existing pipeline artifacts—such as `_ingest_ts` timestamps, Delta Lake table versions, Git commit SHAs, and PHI masking logic.
 
-A **machine-readable package of metadata** that travels with the data — a compact JSON  
-envelope of proof attached to a dataset or result.
+The summary is written to the `kardia_meta.qualiflow_summaries` table and optionally linked to Gold tables using a `_qf_fingerprint` column. Trust indicators in notebooks and dashboards pull directly from this metadata to render context-aware freshness labels, quality scores, schema tags, and privacy indicators.
 
-The evidence bundle can be stored in a metadata repository or table  
-(e.g., a `gold_qf_evidence` table in a data warehouse, keyed by `dataset_id` and `timestamp`).
+SLOs for freshness, validation coverage, and masking requirements are evaluated at runtime. A human-readable trust receipt is also generated for auditability and compliance.
 
-Each time the data is refreshed:
-
-- A new JSON bundle is generated and stored
-- The dataset carries a reference to it (e.g., an ID or fingerprint)
-
-### The Evidence Bundle Includes:
-
-- **Origin & Lineage:**  
-  Where did the data come from (e.g., upstream datasets, source systems)?  
-  How was it produced (e.g., pipeline job ID, code commit/version)?
-
-- **Freshness / Latency:**  
-  - When was the data ingested?  
-  - When was it last updated?  
-  - How long did the pipeline take?  
-  - How does current latency compare to the SLA?
-
-- **Quality Checks:**  
-  Summary of validation results, number of tests passed/failed, and a data quality score  
-  _(e.g., “null percentage = 0.2%” or “98% of values within expected range”)_
-
-- **Contract / Schema Info:**  
-  What schema version does this data adhere to?  
-  Includes a schema hash or version ID.  
-  _(e.g., “We promised the data would look like X — is this using version X, and was that respected?”)_
-
-- **Privacy / Compliance Status:**  
-  Was sensitive data handled properly?  
-  Which columns are masked or tokenized?  
-  What percentage of data was masked?
-
-- **Reproducibility Fingerprint:**  
-  A unique ID representing the exact dataset and the code that produced it,  
-  derived from code version + input data snapshot identifiers.  
-  Useful for engineers needing to fetch logs or rerun the pipeline.
-
-- **Timestamp / Ownership:**  
-  When was the evidence bundle generated, and by whom or what?  
-  _(e.g., “Data product owner: data-eng@company.com, generated at 2025-07-22 14:33 UTC”)_
+All trust summary logic is implemented via a shared helper (`emit_qualiflow_summary`) and modular rendering utilities to ensure consistency and reduce duplication.
 
 ---
 
-### Displaying the Evidence
+## Sample Trust Summary
 
-The UI renderer (e.g., in a BI or dashboard tool) consumes the evidence JSON  
-to display user-friendly proof indicators.
-
-#### For example:
-
-- `freshness.latency_seconds = 20` vs SLA `900` → **Freshness: Green – updated 20s ago**
-- `quality.tests_failed = 0`, `dq_score ≈ 98.7` → **Checkmark or “Quality: A”**
-- `contract.status = OK` → **Label: “Schema v3.1”**
-- `privacy.masked_fields` is non-empty → **Lock icon displayed**
-
----
-
-### Key Concept
-
-For any data artifact, you can retrieve a **JSON payload** (like a **nutritional label**)  
-containing all the standardized metadata listed above.
-
-By standardizing keys and semantics, any tool that adopts Qualiflow can both **produce** and **consume**  
-this evidence in a consistent, interoperable way.
-
----
-
-## Proof Indicators (Human Layer)
-
-> **This is the human-facing UI layer.**  
-> It distills metadata from the evidence bundle into visual indicators, badges, and contextual explanations.
-
-These are the **UI elements** that surface the evidence to users.  
-Rather than dumping raw JSON, Qualiflow defines how to present the highlights of the evidence bundle  
-in context — using **progressive disclosure**.
-
-### Examples include:
-
-- **Trust Badge:**  
-  Badge or icon next to a metric with a status indicator (e.g., green if all tests pass, yellow if warnings, etc.)
-
-- **Freshness Badge:**  
-  A label like `"Fresh (15m)"` if the data is 15 minutes old, or `"Stale"` / `"Updated 2h ago"`.  
-  Every query includes a freshness receipt showing whether the dataset met SLOs.
-
-- **Quality Score:**  
-  `"Data Quality: 98% (12/12 tests passed)"`
-
-- **"Show Lineage" Link or Icon**
-
-- **Validation Details / Proof Report:**  
-  A panel or page showing the full validation report — e.g.,  
-  Great Expectations Data Docs, data quality metrics, or detailed provenance info.
-
-- **Privacy Indicator:**  
-  Icon or text if privacy actions were applied (e.g.,  
-  `"PII masked: Yes (2 fields masked)"`), with the ability to click and view which fields were masked.
-
-- **Reproducibility Fingerprint Display:**  
-  A short hash or run ID shown in an info panel or tooltip (e.g., `"Run ID: 4f67e2"`),  
-  useful for engineers to trace the exact pipeline run and code version that produced the data.
-
-Qualiflow indicators are **layered** to suit different roles:
-
-- **Executives / Casual Consumers:**  
-  See simple green/yellow/red badges
-
-- **Analysts:**  
-  Can click to view more details (e.g., test results, schema versions, recent changes)
-
-- **Engineers:**  
-  Can drill down to the raw evidence JSON
-
----
-
-## Implementation of Proof on Display
-
-> **Note:** Not every phase is required — implementation depends on your organization's needs.
-
-### Phase 1 – Inventory & Gap Analysis
-
-Start by listing the data quality metadata you already collect and where it resides.  
-Examples include ingestion timestamps, validation results stored in QA tables, pipeline logs,  
-transaction history, or schema versions tracked in code repositories.
-
-Then assess:
-
-- Which Qualiflow evidence fields you can populate with existing data  
-- Which fields will require new instrumentation
-
----
-
-### Phase 2 – Generate Evidence Bundles
-
-Build a mechanism to generate a JSON evidence bundle whenever data is refreshed.
-
-For example, a `dbt` model or notebook at the end of a pipeline can:
-
-- Gather metrics (e.g., test pass count, freshness, data quality score)
-- Assemble them into a JSON structure
-- Write that JSON to a Qualiflow evidence table
-- Attach a reference to the dataset itself, such as:
-
-> **In Databricks Delta**, you can store the fingerprint or reference ID as a column  
-like `_qf_fingerprint` in each Gold table. Dashboards can then join or look up  
-the associated evidence by this ID.
-
-#### Example:
-
-When refreshing `gold_patient_lifecycle`, the pipeline would:
-
-- Compute freshness (e.g., max `_ingest_ts` from source tables)
-- Run validations (e.g., via Great Expectations or custom logic)
-- Calculate a data quality score from the validation results
-- Capture the Delta table version or transaction ID for lineage
-- Hash the current dbt git SHA + Delta versions to generate a fingerprint
-- Write the evidence JSON to a table and update the `_qf_fingerprint` column in the Gold table
-
----
-
-### Phase 3 – Display Layer Integration
-
-In BI tools or notebooks, integrate display widgets that surface Qualiflow evidence.
-
-Options include:
-
-- Custom indicators beside each chart that query the latest evidence and render a color-coded trust badge
-- Notebook utilities that print a mini "proof card" at the top of an analysis
-- API methods that return the full evidence bundle for programmatic access
-
-Every indicator should:
-
-- Answer a clear trust-related question (e.g., "Is this fresh?" or "Was anything masked?")
-- Provide progressive disclosure — e.g., a privacy badge should be clickable to reveal what was masked and why,  
-  possibly linking to internal documentation or policy wikis
-
----
-
-### Phase 4 – Trust SLOs & Automatic Receipts
-
-Once Qualiflow is in place, define **Service Level Objectives (SLOs)** for data trust.  
-Examples include:
-
-- **Freshness:** less than 1 hour  
-- **Data Quality Score:** ≥ 95  
-- **Lineage Coverage:** ≥ 90% of upstream sources documented
-
-Then:
-
-- Automate evaluation of these SLOs during each pipeline run
-- Add the evaluation result to the evidence bundle (`slo_status: PASS` / `FAIL`)
-- Escalate visual indicators if SLOs fail (e.g., yellow badge or red alert)
-
-Additionally, generate a **“trust receipt”** — a human-readable snapshot or PDF report  
-summarizing the evidence bundle for auditing purposes.  
-For example:
-
-> "On July 22, the dataset X was refreshed. All tests passed, freshness SLA met, etc.  
-> — Signed by pipeline at 14:33 UTC."
-
-This report can be archived and used in regulated environments to demonstrate compliance.
-
----
-
-### Phase 5 – Packaging & Reuse
-
-Create reusable components to make Qualiflow adoption easy across teams:
-
-- Utility functions to generate JSON bundles from standard inputs
-- Dashboard widget templates for trust badges
-- Internal or open-source libraries that define Qualiflow formats and renderers
-
----
-
-### Summary
-
-Implementing Qualiflow means tightly integrating **data operations** with **data user experience**.  
-It requires collaboration between:
-
-- Data Engineering
-- DevOps / Platform Engineering
-- BI & Dashboard Designers
-
-But the payoff is significant: a visible, reliable, and standardized **trust layer** for data.
-
----
-
-## Potential Challenges with Qualiflow
-
-While Qualiflow can offer major benefits, it's not universally appropriate. Some key considerations include:
-
-- **Overhead for Small Teams:**  
-  For tightly-knit or early-stage teams, Qualiflow may feel like over-engineering. If trust already exists, additional indicators may offer limited value.
-
-- **Visual Clutter or Misuse:**  
-  Poorly designed Qualiflow implementations can overwhelm dashboards with unnecessary icons. Simplicity and intuitive UI are critical to avoid confusion or “badge fatigue.”
-
-- **False Sense of Security:**  
-  If the Qualiflow layer malfunctions or isn’t kept up to date, it can mislead users—creating trust in faulty data. Qualiflow must itself be trustworthy and tested.
-
-- **Cultural Buy-In Required:**  
-  Stakeholders unfamiliar with data quality metrics may find the system excessive or unclear. Success depends on education, trust-building, and data maturity.
-
-- **Engineering Effort:**  
-  Setting up Qualiflow requires pipeline instrumentation, metadata management, and front-end integration—especially challenging in BI tools with limited customization.
-
----
-
-## Conclusion
-
-Qualiflow shines in **complex, distributed, and high-stakes environments** where transparency, auditability, and trust are essential. It may be excessive for small or informal projects, but when implemented thoughtfully, it becomes a lightweight, visual **data warranty system**.
-
-Ultimately, **Qualiflow is not just about quality checks—it’s about communicating quality** in a consistent, user-facing way. When done right, it becomes a powerful trust signal across the data lifecycle.
-
----
-
-## Sample Evidence Bundle
-
-Below is an example of a Qualiflow-compliant evidence bundle — a machine-readable JSON object  
-attached to a dataset at the time of pipeline execution. It includes lineage, freshness, quality,  
-schema contract status, privacy details, and a reproducibility fingerprint.
+A compact JSON object generated at refresh time, capturing core trust signals and stored alongside the dataset.
 
 ```json
 {

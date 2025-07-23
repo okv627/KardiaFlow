@@ -1,28 +1,28 @@
 # Kardiaflow Project — Changelog
 
-## 2025-07-23
-
-Created `docs/qualiflow.md`, a formal specification for a new framework called
-QualiFlow. QF defines a verifiable trust layer for datasets by bundling
-metadata such as lineage, data quality scores, and privacy indicators into a structured
-Evidence Bundle (JSON), and surfacing it through standardized Proof Indicators (UI
-badges, trust scores, freshness labels).
-
-The specification outlines QF’s goals, architecture (Evidence Bundle + Proof Indicators),
-implementation phases, and metadata schema (e.g., `dq_score`, `fingerprint`, `masked_fields`).
-
-This marks the beginning of integrating PoD into Kardiaflow as a first-class trust communication layer.
-
-Refactored notebook directory. Each Medallion layer now has its own folder, with pipeline
-folders within each layer.
-
-Bootstrap script now populates ADLS with folders/files for Providers & Feedback flow. Changed SAS script
-to generate SAS tokens with write privileges in order to allow this.
+## 2025-07-24
 
 TO-DO:
-- Fix display utils banners, some are duplicated, and getting an error every time.
-- Make feedback use copy into not auto loader
 - Verify data quality to end-to-end (accuracy, completeness, consistency, validity, uniqueness, and timeliness/integrity)
+- Consider landing all raw files in ADLS for simplicity.
+
+## 2025-07-23
+
+Created `docs/qualiflow.md`, a formal specification for Qualiflow—a lightweight trust
+layer for datasets. It defines a structured trust summary (JSON) capturing lineage,
+quality scores, schema checks, and privacy indicators, and describes how these signals
+are surfaced through portable trust indicators like badges and freshness labels. The
+spec includes goals, architecture, key metadata fields (e.g., `dq_score`, `fingerprint`,
+`masked_fields`).
+
+Refactored the notebook structure so that each Medallion layer now has its own folder,
+with pipeline notebooks organized within each layer.
+
+The bootstrap script now populates ADLS with seed files for the Providers and Feedback flows.
+The SAS token generation script was updated to include write permissions to support this.
+
+Switched the Bronze Feedback notebook to use COPY INTO instead of Auto Loader for
+incremental batch ingestion.
 
 ## 2025-07-22
 

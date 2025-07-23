@@ -33,6 +33,8 @@ Test files are manually uploaded to **DBFS** or **ADLS Gen2**, then staged into 
 
 Raw files are ingested into **Bronze Delta tables** using **Auto Loader** (or **COPY INTO** for JSONL formats). Each table includes:
 
+Auto Loader is used for structured formats like CSV, Parquet, and TSV where incremental discovery and schema evolution are important. In contrast, COPY INTO is used for the semistructured JSONL Feedback data, where SQL-based projection, type coercion, and optional field handling are required during load.
+
 - Audit columns: `_ingest_ts`, `_source_file`
 - Change Data Feed (CDF) enabled
 - Partitioning and schema enforcement
