@@ -10,7 +10,7 @@ The pipeline ingests raw files into Bronze Delta tables using Auto Loader, appli
 
 The following diagram illustrates the end-to-end data flow across ingestion, transformation, validation, and secure storage:
 
-![KardiaFlow Architecture](https://raw.githubusercontent.com/okv627/KardiaFlow/master/docs/assets/kardiaflow_lineage.png)
+![KardiaFlow Architecture](https://raw.githubusercontent.com/okv627/KardiaFlow/master/docs/assets/kflow_lineage.png?v=2)
 
 ### Data Sources
 
