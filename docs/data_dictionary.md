@@ -1,12 +1,17 @@
-# Data Dictionary: Kardiaflow Synthetic Healthcare Dataset
+# Data Dictionary: KardiaFlow Synthetic Healthcare Dataset
 
-## Source Files
+## Source Files (ADLS Gen2)
 
-- `dbfs:/kardia/raw/claims/claims.parquet`
-- `dbfs:/kardia/raw/claims/providers.tsv`
-- `dbfs:/kardia/raw/ehr/patients.csv`
-- `dbfs:/kardia/raw/ehr/encounters.avro`
-- `dbfs:/kardia/raw/feedback/feedback.json`
+All raw files are manually uploaded to the ADLS container:  
+`abfss://raw@kardiaadlsdemo.dfs.core.windows.net/`
+
+| Dataset     | Path                                                | Format   |
+|-------------|-----------------------------------------------------|----------|
+| Patients    | `/patients/patients.csv`                            | CSV      |
+| Encounters  | `/encounters/encounters.avro`                       | Avro     |
+| Claims      | `/claims/claims.parquet`                            | Parquet  |
+| Providers   | `/providers/providers.tsv`                          | TSV      |
+| Feedback    | `/feedback/feedback.jsonl`                          | JSONL    |
 
 ---
 
@@ -88,8 +93,3 @@
 | `metadata`           | Object          | Additional structured data, such as `{"response_time_ms": 1238}`                |
 
 ---
-
-## Notes
-
-- All data is synthetic and non-PHI
-- Designed for Delta Lake and streaming pipeline testing

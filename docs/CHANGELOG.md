@@ -2,10 +2,13 @@
 
 ## 2025-07-24
 
-Removed Qualiflow. Consolidated Bronze testing strategy to one single validation notebook.
+Simplified the pipeline by removing all Qualiflow components and post-Bronze validation notebooks.  
 
-TO-DO:
-- Consider landing all raw files in ADLS for simplicity.
+Introduced a unified smoke test script that runs lightweight checks across the Bronze, Silver, and
+Gold layers, with results written to the Delta table `kardia_validation.smoke_results`.  
+
+Also migrated the `patients`, `encounters`, and `claims` datasets from DBFS to ADLS Gen2 to
+standardize all raw data sources on cloud-backed storage.
 
 ## 2025-07-23
 

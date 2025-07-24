@@ -1,31 +1,23 @@
 # Kardiaflow: Unified Health Data Pipeline
 
-This project ingests synthetic healthcare data into a Databricks Lakehouse using **Delta Lake**, **Auto Loader**, and a scalable **medallion architecture** (Bronze → Silver → Gold). It supports two core domains:
+This project ingests synthetic healthcare data into a Databricks Lakehouse using
+**Delta Lake**, **Auto Loader**, and a **medallion architecture**. It supports two core domains:
 
 - **Encounters & Patients** — clinical events and demographics  
 - **Claims, Providers & Feedback** — billing, metadata, and satisfaction
 
----
-
-## Raw Bootstrap
-
-Test files are manually uploaded to **DBFS** or **ADLS Gen2**, then staged into structured raw zones using the following notebooks:
-
-| Purpose             | Notebook                             | Description                                      |
-|---------------------|---------------------------------------|--------------------------------------------------|
-| Bootstrap raw zones | `bootstrap_raw.ipynb`                | Creates folder structure and copies seed files   |
-| Move new files      | `move_new_files.ipynb`               | Moves new raw files into proper raw locations    |
-| Reset environment   | `reset_kardia_environment.ipynb`     | Tears down and reinitializes entire environment  |
+Test files are manually uploaded to **ADLS Gen2**, where they are automatically
+discovered by Auto Loader pipelines.
 
 ### Raw File Paths
 
-| Dataset     | Raw Path                                 | Format  |
-|-------------|-------------------------------------------|---------|
-| Patients    | `dbfs:/kardia/raw/patients/`              | CSV     |
-| Encounters  | `dbfs:/kardia/raw/encounters/`            | Avro    |
-| Claims      | `dbfs:/kardia/raw/claims/`                | Parquet |
-| Providers   | `dbfs:/kardia/raw/providers/`             | TSV     |
-| Feedback    | `dbfs:/kardia/raw/feedback/`              | JSONL   |
+| Dataset     | Raw Path                                                    | Format  |
+|-------------|-------------------------------------------------------------|---------|
+| Patients    | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/patients/` | CSV     |
+| Encounters  | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/encounters/`| Avro    |
+| Claims      | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/claims/`   | Parquet |
+| Providers   | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/providers/`| TSV     |
+| Feedback    | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/feedback/` | JSONL   |
 
 ---
 
@@ -91,11 +83,11 @@ Gold notebooks generate business-level aggregations for analytics and dashboards
 ## Validation
 
 All data quality checks are handled by a single, lightweight test script: `99_smoke_checks.py`.
-It runs structured **smoke tests** across Bronze, Silver, and Gold layers with no external dependencies.
+It runs structured smoke tests across Bronze, Silver, and Gold layers with no external dependencies.
 
 - **Bronze:** Verifies row count > 0, primary key is non-null and unique, and optionally checks `_ingest_ts` freshness  
 - **Silver:** Asserts that required columns exist (contract tests)  
 - **Gold:** Ensures key columns like `patient_id` and `avg_score` are not null  
-- **Results:** All checks are logged with status, metric name, and value to a persistent Delta table (`kardia_validation.smoke_results`) for visibility, auditability, and dashboard integration  
+- **Results:** All checks are logged with status, metric name, and value to a persistent Delta table (`kardia_validation.smoke_results`)
 
 ---

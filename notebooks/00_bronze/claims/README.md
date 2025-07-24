@@ -1,16 +1,20 @@
 # Bronze Ingestion: Claims, Providers & Feedback
 
-This layer ingests raw files into Delta tables under the `kardia_bronze` schema using either Auto Loader or COPY INTO, depending on the dataset structure and ingestion needs. All tables include **Change Data Feed (CDF)** and **audit columns**. Each dataset has its own dedicated notebook, schema definition, and checkpoint path, driven by `kflow.config.bronze_paths()`.
+This layer ingests raw files into Delta tables under the `kardia_bronze` schema
+using either Auto Loader or COPY INTO, depending on the dataset structure and
+ingestion needs. All tables include **Change Data Feed (CDF)** and **audit columns**.
+Each dataset has its own dedicated notebook, schema definition, and checkpoint path,
+driven by `kflow.config.bronze_paths()`.
 
 ---
 
 ## Ingested Datasets
 
-| Dataset   | Source Location                              | Format    | Loader Type | Bronze Table                     |
-|-----------|-----------------------------------------------|-----------|-------------|----------------------------------|
-| Claims    | `dbfs:/kardia/raw/claims/`                   | Parquet   | Auto Loader | `kardia_bronze.bronze_claims`    |
-| Providers | `abfss://raw@kardiaadlsdemo.../providers/`   | TSV       | Auto Loader | `kardia_bronze.bronze_providers` |
-| Feedback  | `abfss://raw@kardiaadlsdemo.../feedback/`    | JSONL     | COPY INTO   | `kardia_bronze.bronze_feedback`  |
+| Dataset   | Source Location                                                   | Format    | Loader Type | Bronze Table                     |
+|-----------|--------------------------------------------------------------------|-----------|-------------|----------------------------------|
+| Claims    | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/claims/`         | Parquet   | Auto Loader | `kardia_bronze.bronze_claims`    |
+| Providers | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/providers/`      | TSV       | Auto Loader | `kardia_bronze.bronze_providers` |
+| Feedback  | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/feedback/`       | JSONL     | COPY INTO   | `kardia_bronze.bronze_feedback`  |
 
 ---
 
@@ -34,10 +38,10 @@ This layer ingests raw files into Delta tables under the `kardia_bronze` schema 
 
 ## Notebooks
 
-| Notebook                          | Target Table                      | Notes                            |
-|----------------------------------|-----------------------------------|----------------------------------|
-| `01_bronze_claims_autoloader`    | `bronze_claims`                   | Parquet from DBFS                |
-| `01_bronze_providers_autoloader`| `bronze_providers`                | TSV from ADLS, tab-delimited     |
-| `01_bronze_feedback_copy_into`   | `bronze_feedback`                 | JSONL from ADLS with field casting and projection |
+| Notebook                          | Target Table                      | Notes                                                     |
+|----------------------------------|-----------------------------------|-----------------------------------------------------------|
+| `01_bronze_claims_autoloader`    | `bronze_claims`                   | Parquet from ADLS                                         |
+| `01_bronze_providers_autoloader`| `bronze_providers`                | TSV from ADLS, tab-delimited                              |
+| `01_bronze_feedback_copy_into`   | `bronze_feedback`                 | JSONL from ADLS with field casting and projection         |
 
 ---

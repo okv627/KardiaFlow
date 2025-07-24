@@ -1,15 +1,17 @@
 # Bronze Ingestion: Encounters & Patients
 
-This layer ingests raw patient and encounter records into Delta tables in the `kardia_bronze` schema using Auto Loader with **Change Data Feed (CDF)** and audit columns enabled. Configuration paths and settings are managed via `kflow.config.bronze_paths()`.
+This layer ingests raw patient and encounter records into Delta tables in the
+`kardia_bronze` schema using Auto Loader with **Change Data Feed (CDF)** and audit
+columns enabled. Configuration paths and settings are managed via `kflow.config.bronze_paths()`.
 
 ---
 
 ## Ingested Datasets
 
-| Dataset    | Source Location                    | Format | Loader Type     | Bronze Table                      |
-|------------|-------------------------------------|--------|------------------|-----------------------------------|
-| Patients   | `dbfs:/kardia/raw/patients/`       | CSV    | Auto Loader      | `kardia_bronze.bronze_patients`   |
-| Encounters | `dbfs:/kardia/raw/encounters/`     | Avro   | Auto Loader      | `kardia_bronze.bronze_encounters` |
+| Dataset    | Source Location                                                | Format | Loader Type     | Bronze Table                      |
+|------------|----------------------------------------------------------------|--------|------------------|-----------------------------------|
+| Patients   | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/patients/`   | CSV    | Auto Loader      | `kardia_bronze.bronze_patients`   |
+| Encounters | `abfss://raw@kardiaadlsdemo.dfs.core.windows.net/encounters/` | Avro   | Auto Loader      | `kardia_bronze.bronze_encounters` |
 
 ---
 
