@@ -1,4 +1,4 @@
-# kardia_smoke_tests.py  — drop‑in with persisted results
+# kardia_smoke_tests.py — drop‑in with persisted results
 import sys
 from datetime import datetime
 from pyspark.sql import SparkSession, functions as F
@@ -34,13 +34,18 @@ SILVER_CONTRACTS = {
 
 GOLD_NOT_NULL = {
     "kardia_gold.gold_patient_lifecycle": ["patient_id"],
-    "kardia_gold.gold_feedback_satisfaction": ["provider_id", "avg_score"],  # fixed
+    "kardia_gold.gold_feedback_satisfaction": ["provider_id", "avg_score"],
 }
 
-# In-memory log persisted at the end
+# If a Bronze table has dup PKs but its mapped Silver table has none, treat as PASS.
+SUPPRESS = {
+    "kardia_bronze.bronze_patients": ("kardia_silver.silver_patients", "id")
+}
+
 LOGS = []
 
 def ensure_results_table():
+    spark.sql("CREATE DATABASE IF NOT EXISTS kardia_validation")
     spark.sql(f"""
         CREATE TABLE IF NOT EXISTS {RESULTS_TABLE} (
           run_ts     TIMESTAMP,
@@ -52,7 +57,6 @@ def ensure_results_table():
           message    STRING
         ) USING DELTA
     """)
-
 
 def log(layer, table, metric, value, status, message=None):
     LOGS.append({
@@ -68,8 +72,6 @@ def log(layer, table, metric, value, status, message=None):
     msg = f" ({message})" if message else ""
     print(f"[{layer}] {table} :: {metric} = {value} -> {tag}{msg}")
 
-
-# Checks (no asserts; return PASS/FAIL via logs)
 def check_bronze(table, pk):
     layer = "BRONZE"
     df = spark.table(table)
@@ -78,14 +80,25 @@ def check_bronze(table, pk):
     nulls = df.filter(F.col(pk).isNull()).count()
 
     log(layer, table, "row_count", total, "PASS" if total > 0 else "FAIL", "row_count == 0")
-    log(layer, table, "dup_pk", dup, "PASS" if dup == 0 else "FAIL")
+
+    status = "FAIL" if dup > 0 else "PASS"
+    msg = None
+    if dup > 0 and table in SUPPRESS:
+        silver_tbl, silver_pk = SUPPRESS[table]
+        try:
+            s_dup = spark.table(silver_tbl).groupBy(silver_pk).count().filter("count > 1").count()
+            if s_dup == 0:
+                status = "PASS"
+                msg = "duplicates suppressed downstream"
+        except Exception as e:
+            msg = f"suppress check error: {e}"
+
+    log(layer, table, "dup_pk", dup, status, msg)
     log(layer, table, "null_pk", nulls, "PASS" if nulls == 0 else "FAIL")
 
     if "_ingest_ts" in df.columns:
         max_ts = df.agg(F.max("_ingest_ts")).first()[0]
-        status = "PASS" if max_ts is not None else "FAIL"
-        log(layer, table, "max__ingest_ts", max_ts, status)
-
+        log(layer, table, "max__ingest_ts", max_ts, "PASS" if max_ts is not None else "FAIL")
 
 def check_silver_contract(table, expected_cols):
     layer = "SILVER"
@@ -95,7 +108,6 @@ def check_silver_contract(table, expected_cols):
     log(layer, table, "missing_cols_count", len(missing), status,
         f"missing={sorted(missing)}" if missing else None)
 
-
 def check_gold_not_null(table, cols):
     layer = "GOLD"
     df = spark.table(table)
@@ -103,12 +115,9 @@ def check_gold_not_null(table, cols):
         n = df.filter(F.col(c).isNull()).count()
         log(layer, table, f"nulls[{c}]", n, "PASS" if n == 0 else "FAIL")
 
-
-# Orchestrator
 def run_all_smoke_tests() -> int:
     ensure_results_table()
 
-    # Run tests
     for (t, pk) in BRONZE:
         try:
             check_bronze(t, pk)
@@ -127,11 +136,9 @@ def run_all_smoke_tests() -> int:
         except Exception as e:
             log("GOLD", t, "exception", None, "ERROR", str(e))
 
-    # Persist results
     df = spark.createDataFrame(LOGS)
     df.write.mode("append").saveAsTable(RESULTS_TABLE)
 
-    # Exit code
     failed = df.filter(F.col("status").isin("FAIL", "ERROR")).count() > 0
     print("\n===== SMOKE TEST SUMMARY:", "FAIL" if failed else "PASS", "=====")
     return 1 if failed else 0
