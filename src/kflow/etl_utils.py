@@ -1,7 +1,6 @@
 # src/kflow/etl_utils.py
 import pyspark.sql.functions as F
-from pyspark.sql import DataFrame, SparkSession
-
+from pyspark.sql import DataFrame
 from .config import current_batch_id
 
 def add_audit_cols(df: DataFrame) -> DataFrame:

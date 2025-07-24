@@ -54,5 +54,3 @@ The Silver layer powers Gold KPIs including:
 - `gold_feedback_metrics`
 
 All are derived from Silver base tables and enriched joins.
-
----

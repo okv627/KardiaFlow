@@ -42,5 +42,3 @@ These columns are explicitly nulled at write time to prevent exposure.
 ## Output Format
 
 All Silver tables are Delta Lake managed and optimized for downstream Gold KPIs, joining, and analytics. Streaming logic ensures updates are applied incrementally, with schema evolution support.
-
----

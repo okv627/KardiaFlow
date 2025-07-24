@@ -1,93 +1,68 @@
 # POSTMORTEM.md
 
-## Incident Summary
+## Azure Cost Overrun (May 2025)
 
-In May 2025, an early version of the Kardiaflow project was deployed to Azure as part of a simulated healthcare data engineering pipeline. This version provisioned persistent infrastructure including Azure Data Lake Storage Gen2 (ADLS), Azure Data Factory (ADF), Databricks, and network-bound services such as a Self-Hosted Integration Runtime (SHIR). 
+![Azure cost spike](assets/kflow_overage.jpg)
 
-Over the course of several development iterations, the project accrued over **$250 USD in unexpected Azure charges**—despite only handling synthetic CSV files and running short-term tests.
+*Figure: Unexpected Azure billing from initial prototype.*
+
+---
+
+## Summary
+
+In May 2025, the initial version of Kardiaflow was deployed to Azure using ADLS Gen2,
+Azure Data Factory (ADF), and Databricks. The project processed only synthetic test
+files, but nonetheless generated over **$200 in charges** due to architecture oversights.
 
 ---
 
 ## Root Causes
 
-### 1. ADLS Gen2 Transaction Costs
-- Frequent partitioned overwrite operations triggered **excessive write transactions**, especially during PySpark `overwrite` writes to partitioned directories.
-- ADLS billed **per operation**, not per GB, leading to hundreds of dollars in transaction charges even on tiny 
-  datasets.
+### 1. ADLS Gen2 Transaction Costs  
+- PySpark jobs used `overwrite` mode on partitioned directories, triggering **tens of thousands of write operations**.  
+- ADLS Gen2 bills **per transaction**, not per volume.  
+- Total data size was small (~10MB), but transaction volume drove **$150+ in storage access fees**.
 
-### 2. NAT Gateway Idle Billing (via SHIR)
-- Creating a SHIR VM to support ADF resulted in the **silent deployment of NAT Gateways** for outbound traffic.
-- NATs billed per hour whether traffic existed or not. After just a few days, idle charges exceeded **$20**.
+### 2. Idle NAT Gateway from SHIR  
+- Provisioning a Self-Hosted Integration Runtime (SHIR) for ADF created a **NAT Gateway** for outbound traffic.  
+- The NAT incurred **hourly charges** regardless of traffic volume.  
+- One week of idle time led to **~$10 in costs**.
 
-### 3. Missing Teardown Controls
-- No teardown automation was in place. Forgotten or stranded RGs and workspaces quietly continued incurring costs.
+### 3. No Teardown Automation  
+- Resource groups, workspaces, and services remained active after short test runs.  
+- Manual cleanup was delayed, leading to continued billing.
 
-### 4. Lack of Budget Alerts
-- No Azure cost budget or alerts were configured. There was no early warning before costs escalated.
+### 4. Missing Budget Alerts  
+- No cost thresholds or alerts were configured in the Azure subscription.  
+- Charges escalated without warning until manually reviewed.
 
 ---
 
 ## Impact
 
-| Area                  | Outcome                                     |
-|-----------------------|---------------------------------------------|
-| Azure billing         | ~$250 in unexpected charges across services |
-| Resource hygiene      | Multiple RGs required manual cleanup        |
-| Time loss             | ~8 hours spent with Azure Support           |
-| Project progress      | Paused and reset to avoid further cost risk |
+| Area             | Description                               |
+|------------------|-------------------------------------------|
+| Azure billing    | Over $200 total charges across services   |
+| Cleanup effort   | Manual teardown, Azure support engagement |
+| Project timeline | Delayed while redesigning from scratch    |
 
 ---
 
 ## Resolution
 
-I destroyed all existing RGs and terminated the Azure subscription to prevent further leakage. I saved all scripts and synthetic datasets locally. A new Azure subscription was created with zero resources provisioned.
-
-I then rearchitected Kardiaflow from the ground up with **cost hygiene and teardown safety as first-class goals**.
-
----
-
-## Redesign Strategy: “Safe Mode Data Engineering”
-
-The new Kardiaflow project is designed around several non-negotiable constraints:
-
-| Constraint                        | Implementation                                                                 |
-|----------------------------------|--------------------------------------------------------------------------------|
-| Fully disposable infrastructure  | All resources exist inside a single Azure RG, created and destroyed per run    |
-| Bicep-defined IaC                | Bicep script provisions only essential services (RG, ADF, Databricks, Key Vault)|
-| Cost alerting                    | Budget cap ($2 soft limit) with email/SMS alerts                              |
-| No cost-trap services            | No ADLS, no SHIR, no VNet, no UC, no Access Connector                          |
-| DBFS-only data staging           | Synthetic CSVs loaded directly into Databricks FileStore (no ADLS transactions)|
-| Single-pass Spark jobs           | 1-node cluster, 10-min termination, <1¢ per job run                            |
-| GitHub Actions CI/CD             | One-click end-to-end demo run + teardown + cost audit                         |
-| Cost snapshot after each run     | `az consumption usage list > run_cost.json` stored per pipeline execution     |
+- All resource groups were deleted and the Azure subscription was closed.  
+- Code and test datasets were preserved locally.  
+- A new subscription was created with zero preprovisioned services.  
+- Architecture was redefined around **strict teardown, cost visibility, and minimal surface area**.
 
 ---
 
-## Outcome
+## Redesign Highlights
 
-This postmortem and the resulting architecture show not just the ability to build data engineering systems—but the ability to run them safely in cloud environments where **cost is a risk surface**.
-
-Kardiaflow now simulates:
-- Healthcare-grade ingestion and PHI masking
-- Full infra-as-code provisioning
-- Safe teardown
-- Cost transparency
-- CI-driven reproducibility
-
-All within a repeatable, sub-$1 budget envelope.
-
----
-
-## Lessons Learned
-
-| Lesson | Takeaway |
-|--------|----------|
-| Cost control must be proactive | Azure’s billing model requires defensive defaults and budgeting before deploying. |
-| Infra must be disposable | If you can’t safely delete it, you don’t own it — it owns you. |
-| Simulations can leak | Even synthetic data + eval services can trigger real billing consequences. |
-| Design from failure | A failed pipeline is more valuable than a safe one that never taught you anything. |
-
----
-
-**Author**: Matthew Tripodi  
-**Date**: June 2025  
+| Design Constraint           | Implementation                                                        |
+|-----------------------------|------------------------------------------------------------------------|
+| Disposable infrastructure   | Bicep provisions all resources inside a single RG, destroyed after use |
+| No cost-trap services       | Avoided ADLS, SHIR, NAT, and unnecessary networking components         |
+| Budget enforcement          | Soft limit ($2) with email/SMS alerts configured                      |
+| Minimal compute footprint   | 1-node cluster with 10-minute autostop, jobs run in <1¢                |
+| Storage strategy            | All staging to DBFS, avoiding transactional billing                    |

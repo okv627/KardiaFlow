@@ -43,5 +43,3 @@ driven by `kflow.config.bronze_paths()`.
 | `01_bronze_claims_autoloader`    | `bronze_claims`                   | Parquet from ADLS                                         |
 | `01_bronze_providers_autoloader`| `bronze_providers`                | TSV from ADLS, tab-delimited                              |
 | `01_bronze_feedback_copy_into`   | `bronze_feedback`                 | JSONL from ADLS with field casting and projection         |
-
----

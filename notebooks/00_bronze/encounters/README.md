@@ -32,5 +32,3 @@ columns enabled. Configuration paths and settings are managed via `kflow.config.
 |----------------------------------|-----------------------------------|------------------|
 | `01_bronze_patients_autoloader`  | `bronze_patients`                 | Incremental batch |
 | `01_bronze_encounters_autoloader`| `bronze_encounters`               | Continuous stream |
-
----

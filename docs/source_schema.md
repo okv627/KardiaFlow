@@ -18,5 +18,3 @@ relate to one another structurally and semantically across different formats.
 - **feedback.jsonl** connects to:
   - `encounters.avro` via `feedback.visit_id → encounters.ID`
   - `providers.tsv` via `feedback.provider_id → providers.ProviderID`
-
----

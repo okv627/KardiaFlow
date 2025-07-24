@@ -1,5 +1,24 @@
 # Kardiaflow Project — Changelog
 
+## 2025-07-25
+
+**KardiaFlow v1.0 Finalized**
+
+The KardiaFlow pipeline is now complete.
+
+- All ingestion, transformation, and aggregation flows for **patients**, **encounters**, **claims**, **feedback**, and **providers** are fully implemented and validated.
+- Each layer—**Bronze**, **Silver**, **Gold**—follows patterns with audit trails, CDF-driven incremental logic, and PHI masking.
+- Streaming and batch jobs are unified with reusable patterns, checkpoint management, and consistent config handling.
+
+**Final features added:**
+
+- Unified `smoke_test_all` notebook to run structured quality checks across all layers.
+- All raw datasets now sourced from **ADLS Gen2**.
+- Code modularization complete (`src/kflow/`), with utility functions for stream writes, display, validation, and 
+  config.
+
+All scripts, notebooks, and infrastructure are now stable, teardown-safe, and cloud-native.
+
 ## 2025-07-24
 
 Simplified the pipeline by removing all Qualiflow components and post-Bronze validation notebooks.  
@@ -306,12 +325,11 @@ aligning it with the naming conventions used elsewhere in the project.
 
 ## 2025-07-06
 
-We fixed a subtle but important correctness issue in the Silver merge logic by
-replacing a naive .dropDuplicates(["ID"]) call—which would have retained an
-arbitrary row per patient ID—with a deterministic approach that explicitly
-keeps only the most recent post-image for each patient. Using a window function
+Fixed an issue in the Silver merge logic by
+replacing a .dropDuplicates(["ID"]) with a deterministic approach that explicitly
+keeps only the most recent post-image for each patient. A window function is used
 (row_number() over a partition by ID ordered by _commit_version descending),
-we now ensure that only the latest change per ID (based on Delta Lake commit
+to ensure that only the latest change per ID (based on Delta Lake commit
 lineage) is processed during the merge. This aligns with SCD Type 1 semantics
 and eliminates the risk of randomly overwriting newer updates with stale data.
 

@@ -89,5 +89,3 @@ It runs structured smoke tests across Bronze, Silver, and Gold layers with no ex
 - **Silver:** Asserts that required columns exist (contract tests)  
 - **Gold:** Ensures key columns like `patient_id` and `avg_score` are not null  
 - **Results:** All checks are logged with status, metric name, and value to a persistent Delta table (`kardia_validation.smoke_results`)
-
----
