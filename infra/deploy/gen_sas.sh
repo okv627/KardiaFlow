@@ -1,18 +1,25 @@
 #!/usr/bin/env bash
+# Generate a write‑enabled SAS token for the ADLS 'raw' container
+# and store it as a Databricks secret.
 set -euo pipefail
 
-# --- 1. Load env ---
-here="$(cd "$(dirname "$0")" && pwd)"
-# shellcheck source=/dev/null
-source "$here/.env"
+# ───────────── 0. Locate .env & repo root ─────────────
+here="$(cd "$(dirname "$0")" && pwd)"       # …/infra/deploy
+infra_root="$here/.."                       # …/infra
+repo_root="$infra_root/.."                  # project root
 
-# --- 2. Require DATABRICKS_PAT ---
+ENV_FILE="$infra_root/.env"
+[[ -f "$ENV_FILE" ]] || {
+  echo "ERROR: .env not found at $ENV_FILE" >&2; exit 1; }
+
+# shellcheck source=/dev/null
+source "$ENV_FILE"
 : "${DATABRICKS_PAT:?ERROR: Set DATABRICKS_PAT in infra/.env}"
 
-# --- 3. Azure scope ---
+# ───────────── 1. Azure scope ─────────────
 az account set --subscription "$SUB"
 
-# --- 4. Resolve workspace URL ---
+# ───────────── 2. Resolve Databricks URL ─────────────
 DB_HOST="$(az deployment group show \
   --resource-group "$RG" \
   --name "$DEPLOY" \
@@ -22,21 +29,21 @@ export DATABRICKS_HOST="https://${DB_HOST}"
 export DATABRICKS_TOKEN="$DATABRICKS_PAT"
 echo "Databricks host: $DATABRICKS_HOST"
 
-# --- 5. Configure Databricks CLI (v0) non‑interactively ---
-# Writes/updates ~/.databrickscfg entry for $PROFILE
+# ───────────── 3. Configure Databricks CLI ─────────────
 databricks configure --token \
   --host  "$DATABRICKS_HOST" \
   --token "$DATABRICKS_TOKEN" \
-  --profile "$PROFILE"
+  --profile "$PROFILE" >/dev/null
 
-# --- 6. Create secret scope (ignore if exists) ---
+# ───────────── 4. Create secret scope (idempotent) ─────────────
 databricks secrets create-scope "$PROFILE" \
   --initial-manage-principal users \
   --profile "$PROFILE" 2>/dev/null || true
 
-# --- 7. Generate a SAS token for ADLS 'raw' container (write-enabled) ---
-# Default: 180 days, permissions racwdl (read, add, create, write, delete, list)
-SAS_EXPIRY="$(date -u -d '+180 days' '+%Y-%m-%dT%H:%MZ' 2>/dev/null || gdate -u -d '+180 days' '+%Y-%m-%dT%H:%MZ')"
+# ───────────── 5. Generate SAS token ─────────────
+SAS_EXPIRY="$(date -u -d '+180 days' '+%Y-%m-%dT%H:%MZ' 2>/dev/null || \
+             gdate -u -d '+180 days' '+%Y-%m-%dT%H:%MZ')"
+
 CONN_STR="$(az storage account show-connection-string \
   --resource-group "$RG" \
   --name "$ADLS" -o tsv)"
@@ -46,10 +53,9 @@ RAW_SAS="$(az storage container generate-sas \
   --name            "$CONT" \
   --permissions     racwdl \
   --expiry          "$SAS_EXPIRY" \
-  --https-only      \
-  --output          tsv)"
+  --https-only      -o tsv)"
 
-# --- 8. Store the SAS in Databricks secrets (v0 syntax) ---
+# ───────────── 6. Store SAS in Databricks ─────────────
 echo -n "$RAW_SAS" | databricks secrets put-secret \
   "$PROFILE" adls_raw_sas \
   --profile "$PROFILE"

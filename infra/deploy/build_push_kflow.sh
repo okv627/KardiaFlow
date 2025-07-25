@@ -1,45 +1,41 @@
 #!/usr/bin/env bash
+# Build kflow wheel and push it to /Workspace/Shared/libs
 set -euo pipefail
 
-# ------------------------ 0. Locate repo & env ------------------------
-here="$(cd "$(dirname "$0")" && pwd)"
-repo_root="$here/.."
+# ───────────── 0. Locate .env & repo root ─────────────
+here="$(cd "$(dirname "$0")" && pwd)"       # …/infra/deploy
+infra_root="$here/.."                       # …/infra
+repo_root="$infra_root/.."                  # project root
 cd "$repo_root"
 
-# shellcheck source=/dev/null
-source "$here/.env"
+ENV_FILE="$infra_root/.env"
+[[ -f "$ENV_FILE" ]] || {
+  echo "ERROR: .env not found at $ENV_FILE" >&2; exit 1; }
 
+# shellcheck source=/dev/null
+source "$ENV_FILE"
 : "${DATABRICKS_PAT:?ERROR: Set DATABRICKS_PAT in infra/.env}"
 
-# ------------------------ 1. Resolve version --------------------------
+# ───────────── 1. Resolve kflow version ─────────────
 KFLOW_VER="$(python - <<'PY'
-import sys
-from pathlib import Path
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
+import sys, tomllib, pathlib
 with open("pyproject.toml", "rb") as f:
-    data = tomllib.load(f)
-print(data["project"]["version"])
+    print(tomllib.load(f)["project"]["version"])
 PY
 )"
-
 wheel_glob="dist/kflow-${KFLOW_VER}-py3-none-any.whl"
 
-# ------------------------ 2. Build wheel ------------------------------
-python -m pip install --upgrade build setuptools wheel >/dev/null
+# ───────────── 2. Build wheel ─────────────
+python -m pip install --quiet --upgrade build setuptools wheel
 python -m build --wheel >/dev/null
 
-if ! ls $wheel_glob >/dev/null 2>&1; then
-  echo "ERROR: Wheel not found at $wheel_glob"
-  exit 1
-fi
+[[ -e $wheel_glob ]] || {
+  echo "ERROR: Wheel not found at $wheel_glob" >&2; exit 1; }
 
 wheel_path="$(ls $wheel_glob | head -1)"
 wheel_name="$(basename "$wheel_path")"
 
-# ------------------------ 3. Databricks auth --------------------------
+# ───────────── 3. Databricks auth ─────────────
 DB_HOST="$(az deployment group show \
   --resource-group "$RG" \
   --name "$DEPLOY" \
@@ -53,18 +49,16 @@ databricks configure --token \
   --token "$DATABRICKS_TOKEN" \
   --profile "$PROFILE" >/dev/null
 
-# ------------------------ 4. Upload wheel -----------------------------
+# ───────────── 4. Upload wheel ─────────────
 WS_DEST_DIR="/Workspace/Shared/libs"
 WS_DEST_PATH="${WS_DEST_DIR}/${wheel_name}"
 
-databricks workspace mkdirs "$WS_DEST_DIR" --profile "$PROFILE" >/dev/null 2>&1 || true
+databricks workspace mkdirs "$WS_DEST_DIR" --profile "$PROFILE" 2>/dev/null || true
 
 databricks workspace import \
   --file "$wheel_path" \
   "$WS_DEST_PATH" \
-  --format RAW \
-  --overwrite \
+  --format RAW --overwrite \
   --profile "$PROFILE"
 
-echo "Uploaded wheel to $WS_DEST_PATH"
-echo "kflow $KFLOW_VER ready."
+echo "Uploaded $wheel_name to $WS_DEST_PATH – kflow$KFLOW_VER ready."

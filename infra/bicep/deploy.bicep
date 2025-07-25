@@ -1,5 +1,5 @@
-// infra/deploy.bicep
-// KardiaFlow minimal ADLS + Databricks (v1.5 · 2025-07-17)
+// KardiaFlow • minimal ADLS+ Databricks (v1.6·2025‑07‑25)
+// Path: infra/bicep/deploy.bicep
 targetScope = 'resourceGroup'
 
 @description('Azure region')
@@ -17,7 +17,7 @@ param adlsAccountName string = 'kardiaadlsdemo'
 @description('Raw container name')
 param adlsRawContainerName string = 'raw'
 
-// ────────────── ADLS Gen2 ──────────────
+// ────────────── ADLS Gen2 ──────────────
 resource adls 'Microsoft.Storage/storageAccounts@2024-01-01' = {
   name: adlsAccountName
   location: location
@@ -50,13 +50,14 @@ resource databricks 'Microsoft.Databricks/workspaces@2024-05-01' = {
   location: location
   sku: {name: 'standard'}
   tags: {
-    owner: 'KardiaFlow'
-    env: 'dev'
-    costCenter: 'data-engineering'
-    billingTier: 'minimal'
+    owner:        'KardiaFlow'
+    env:          'dev'
+    costCenter:   'data-engineering'
+    billingTier:  'minimal'
   }
   properties: {
-    managedResourceGroupId: subscriptionResourceId('Microsoft.Resources/resourceGroups', managedRgName)
+    managedResourceGroupId: subscriptionResourceId(
+      'Microsoft.Resources/resourceGroups', managedRgName)
     publicNetworkAccess: 'Enabled'
     parameters: {
       enableNoPublicIp: {value: false}

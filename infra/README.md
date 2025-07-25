@@ -53,7 +53,7 @@ az deployment group create \
 
 ---
 
-**5. Add your PAT to the .env file**
+**5. Add your PAT to.env as `DATABRICKS_PAT=...`**
 
 ---
 
@@ -84,7 +84,7 @@ infra/deploy/build_push_kflow.sh
 **9. Tear down all provisioned resources safely**
 
 ```bash
-./infra/teardown.sh
+./infra/deploy/teardown.sh
 ```
 
 The teardown script script will:
@@ -102,6 +102,7 @@ To preview what the deployment will do without actually creating resources:
 
 ```bash
 az deployment group what-if \
-  --resource-group kardia-rg-dev \
-  --template-file infra/bicep/deploy.bicep
+  --resource-group "$RG" \
+  --template-file infra/bicep/deploy.bicep \
+  --name "$DEPLOY"
 ```
