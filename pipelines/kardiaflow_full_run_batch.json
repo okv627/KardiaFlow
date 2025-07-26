@@ -1,6 +1,4 @@
 {
-  "job_id": 204764129022171,
-  "new_settings": {
     "name": "Kardiaflow Full Run Batch",
     "description": "This job executes the full KardiaFlow pipeline in mode=batch, processing all available test data. It covers ingestion, transformation, enrichment, aggregation, and validation layers, with streaming tasks configured to run as bounded batch-style flows.",
     "email_notifications": {
@@ -330,7 +328,7 @@
           "data_security_mode": "DATA_SECURITY_MODE_DEDICATED",
           "runtime_engine": "STANDARD",
           "kind": "CLASSIC_PREVIEW",
-          "is_single_node": true
+          "is_single_node": true,
         }
       }
     ],
@@ -342,4 +340,3 @@
       "user_name": "matthew.databrickslab2@outlook.com"
     }
   }
-}

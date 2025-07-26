@@ -1,7 +1,12 @@
 # kardia_smoke_tests.py — drop‑in with persisted results
-import sys
+import sys, subprocess
 from datetime import datetime
 from pyspark.sql import SparkSession, functions as F
+
+subprocess.check_call([
+    sys.executable, "-m", "pip", "install",
+    "--no-deps", "--no-index", "--find-links=/dbfs/Shared/libs", "kflow"
+])
 
 spark = SparkSession.builder.getOrCreate()
 
