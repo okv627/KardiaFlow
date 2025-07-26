@@ -1,11 +1,10 @@
 [project]
 name = "kflow"
-version = "0.2.5" # bump before pushing a new wheel
+version = "0.2.6"
 description = "Shared utilities for KardiaFlow ETL pipelines"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "pyspark>=3.5",
   "delta-spark>=3.0.0"
 ]
 

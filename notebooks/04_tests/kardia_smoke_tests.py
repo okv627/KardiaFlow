@@ -149,4 +149,16 @@ def run_all_smoke_tests() -> int:
     return 1 if failed else 0
 
 if __name__ == "__main__":
-    sys.exit(run_all_smoke_tests())
+    try:
+        # Run all smoke tests and capture the result code (0 = pass, 1 = failure)
+        code = run_all_smoke_tests()
+
+        # Raise an exception if any test failed, so the job marks the run as failed
+        if code != 0:
+            raise Exception("Smoke test failed with non-zero exit code")
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
+        raise e

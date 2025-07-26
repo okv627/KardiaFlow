@@ -49,7 +49,7 @@ az group create --name "$RG" --location eastus
 
 ---
 
-**3.  Deploy infrastructure with Bicep (Databricks + ADLS)**
+**3. Deploy infrastructure with Bicep (Databricks + ADLS)**
 
 ```bash
 # Option A – Standard (default, cheaper)
@@ -75,11 +75,11 @@ az deployment group create \
 
 ---
 
-**5. Add your PAT to.env as `DATABRICKS_PAT=...`**
+**5. Add your PAT to .env as `DATABRICKS_PAT=your_token_here`**
 
 ---
 
-**6. After deploying, configure the Databricks CLI profile:**
+**6. Configure the Databricks CLI profile**
 
 ```bash
 url=$(az databricks workspace show -g "$RG" -n "$WORKSPACE" --query "workspaceUrl" -o tsv)
@@ -96,9 +96,9 @@ infra/deploy/gen_sas.sh
 
 ---
 
-**8. Upload the wheel to DBFS:**
+**8. Build and upload the wheel to DBFS**
 
-This builds the wheel from your local pyproject.toml and uploads it to DBFS.
+This installs the build tool, creates the .whl package from pyproject.toml, and uploads it to DBFS.
 
 ```bash
 python -m pip install --upgrade build
@@ -112,53 +112,27 @@ databricks fs mkdirs dbfs:/Shared/libs
 databricks fs cp "$WHL" dbfs:/Shared/libs/ --overwrite
 ```
 
-> Why DBFS? Because it’s the simplest way to reference a binary file from a notebook with %pip. (Storing libraries 
-> in DBFS root is deprecated from DBR 15.1+, but we are on DBR 13.3 LTS.
+> 💡 **Why DBFS?**  
+> It’s the simplest way to make local Python packages available to notebooks using `%pip install --no-index --find-links=...`.  
+> Compatible with cost-efficient DBR 13.3 LTS and avoids issues with workspace paths or job-level libraries.
 
 ---
 
-**9. Attach the wheel to each task (one-time only)**
-
-Add this to each job task definition:
+**9. Create or reset the batch job**
 
 ```bash
-"libraries": [
-  { "whl": "/Workspace/Shared/libs/kflow-latest.whl" }
-]
-```
-
-> 💡 This is required because shared job clusters ignore cluster-level libraries — task-level libraries are the only reliable method unless you're using Unity Catalog or workspace init scripts (which are more complex to manage).
-
----
-
-**10. Create/reset the job with the following commands:**
-
-```bash
+# To create from scratch
 databricks jobs create --json '@pipelines/kardiaflow_full_run_batch.json' --profile kardia
 ```
 
 ```bash
+# To reset with a new wheel or config
 databricks jobs reset --json @pipelines/reset_kardiaflow_full_run_batch.json
 ```
 
-NOTE:
-
-When you cut a new wheel version, just run:
-
-```bash
-python -m build
-databricks workspace import --format AUTO \
-  --file dist/*.whl \
-  "/Shared/libs/kflow-latest.whl" --overwrite
-```
-- No JSON edits
-- No task edits
-- No cluster edits
-- No init script required
-
 ---
 
-**10. Tear down all provisioned resources safely**
+**9. Tear down all provisioned resources**
 
 ```bash
 ./infra/deploy/teardown.sh
@@ -166,10 +140,37 @@ databricks workspace import --format AUTO \
 
 The teardown script script will:
 
-- Delete the Databricks workspace (which deletes the managed RG too)
-- Delete the main resource group (kardia-rg-dev)
+- Deletes the Databricks workspace (automatically removes the managed RG)
+- Deletes the main resource group (kardia-rg-dev)
 - Print a confirmation message
-- Resources will disappear over the next 2–5 minutes.
+- Resources disappear within 2–5 minutes.
+
+---
+
+### When to Build a New Wheel
+
+If you've made changes to the `kflow` package — such as editing any `.py` files inside the `kflow/` directory — follow these steps to deploy your updates:
+
+1. Update the version number in `pyproject.toml`
+
+`version = "0.2.6"` → `version = "0.2.7"`
+
+
+2. Clean old build artifacts (recommended for a fresh build):
+
+```bash
+rm -rf dist/*
+```
+
+3. Rebuild and re-upload the new wheel:
+
+```bash
+python -m build
+WHL=$(ls dist/kflow-*-py3-none-any.whl | tail -n 1)
+databricks fs cp "$WHL" dbfs:/Shared/libs/ --overwrite
+```
+
+This ensures all notebooks and job runs use the latest version and prevents caching issues with `%pip`.
 
 ---
 

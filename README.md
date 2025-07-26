@@ -15,7 +15,6 @@ The following diagram illustrates the end-to-end data flow, including ingestion,
 ![Kardiaflow Architecture](https://raw.githubusercontent.com/okv627/Kardiaflow/master/docs/assets/kflow_lineage.png?v=2)
 
 
-
 ## Key Features
 
 **Multi-Domain Simulation**  
@@ -63,16 +62,13 @@ Deploy the full Azure environment via:
 
 > ⚠️ Commands must be run from the **project root**.
 
+---
 
+## Databricks Summit 2025: How It Shaped Kardiaflow
 
-## Technology Stack
+In June 2025, I completed 24 hours of hands-on training across six advanced data engineering workshops at the 
+Databricks Data + AI Summit. These sessions directly influenced Kardiaflow’s design especially in areas like streaming pipeline robustness, CDC with Lakeflow Declarative Pipelines, data governance via Unity Catalog, and job orchestration with Lakeflow Jobs.
 
-| Layer        | Tool/Service                  |
-|--------------|-------------------------------|
-| Cloud        | Azure                         |
-| Storage      | ADLS Gen2                     |
-| Compute      | Azure Databricks              |
-| ETL Engine   | Spark Structured Streaming     |
-| Metadata     | Delta Lake w/ CDF |
-| Infra-as-Code| Bicep + Azure CLI             |
-| Validation   | PySpark → Delta               |
+You can read my full reflection on the summit and how each session impacted Kardiaflow’s architecture here:  
+
+👉 [`docs/summit_reflections.md`](docs/summit_reflections.md)

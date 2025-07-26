@@ -1,5 +1,23 @@
 # Kardiaflow Project — Changelog
 
+## 2025-07-26
+
+Worked on runtime dependency bootstrapping for ephemeral Databricks job clusters.
+The process is tricky because these clusters don't retain state, so any custom packages
+like `kflow` must be installed at execution time inside each notebook or task.
+The challenge is compounded by DBFS path nuances, pip environment behavior, and
+evolving support for init scripts, %pip, and workspace library installations,
+all of which require precise configuration to ensure reproducibility across version changes.
+
+Added the modular kflow Python package with proper versioning and deployed it as a
+.whl artifact to DBFS. Updated all notebooks to use %pip install from DBFS for
+streamlined dependency management. Deprecated job-level library definitions in
+favor of notebook-scoped installs. Created and deployed the
+kardia_full_run_batch job via the Databricks CLI with clean, centralized cluster
+configuration. Updated the smoke test to add
+exception-safe handling to prevent false job failures. All stages passed validation,
+confirming full pipeline correctness and reproducibility.
+
 ## 2025-07-25
 
 **KardiaFlow v1.0 Finalized**
