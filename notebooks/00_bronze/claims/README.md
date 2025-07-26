@@ -2,7 +2,7 @@
 
 This layer ingests raw files into Delta tables under the `kardia_bronze` schema
 using either Auto Loader or COPY INTO, depending on the dataset structure and
-ingestion needs. All tables include **Change Data Feed (CDF)** and **audit columns**.
+ingestion needs. All tables include Change Data Feed (CDF) and audit columns.
 Each dataset has its own dedicated notebook, schema definition, and checkpoint path,
 driven by `kflow.config.bronze_paths()`.
 
@@ -20,8 +20,8 @@ driven by `kflow.config.bronze_paths()`.
 
 ## Loader Strategy
 
-- **Auto Loader** is used for structured tabular datasets (CSV, TSV, Parquet) with known schemas and expected evolution over time. It supports incremental ingestion, schema tracking, and CDF compatibility, making it ideal for operational datasets like Claims and Providers.
-- **COPY INTO** is used for semistructured formats like JSONL, where ingestion requires SQL-based projection, type coercion, and conditional field handling. Feedback records include optional fields (e.g., `tags`, `metadata`, `source`), making COPY INTO better suited for schema-on-read with runtime control.
+- Auto Loader is used for structured tabular datasets (CSV, TSV, Parquet) with known schemas and expected evolution over time. It supports incremental ingestion, schema tracking, and CDF compatibility, making it ideal for operational datasets like Claims and Providers.
+- COPY INTO is used for semistructured formats like JSONL, where ingestion requires SQL-based projection, type coercion, and conditional field handling. Feedback records include optional fields (e.g., `tags`, `metadata`, `source`), making COPY INTO better suited for schema-on-read with runtime control.
 
 ---
 

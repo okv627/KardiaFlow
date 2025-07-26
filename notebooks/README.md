@@ -89,3 +89,53 @@ It runs structured smoke tests across Bronze, Silver, and Gold layers with no ex
 - **Silver:** Asserts that required columns exist (contract tests)  
 - **Gold:** Ensures key columns like `patient_id` and `avg_score` are not null  
 - **Results:** All checks are logged with status, metric name, and value to a persistent Delta table (`kardia_validation.smoke_results`)
+
+---
+
+## Streaming Mode: `mode=demo` vs `mode=live`
+
+This project supports two streaming modes, controlled by a parameter named `mode`.
+
+| Mode   | Behavior                                    | Use Case              |
+|--------|---------------------------------------------|------------------------|
+| batch  | Reads all available data and stops          | For demos and CI runs |
+| stream | Streams run in continuous 30s micro-batches | For realism or testing |
+
+---
+
+### How it works
+
+The `mode` parameter is passed to specific **Encounters** tasks in the job. Depending on the value:
+
+- In `mode=batch`, streaming notebooks use `trigger(availableNow=True)` and **exit automatically** after processing 
+  existing data. This allows the full job to finish cleanly.
+- In `mode=stream`, they use `trigger(processingTime="30 seconds")` and stay running continuously.
+
+Checkpoint paths are also suffixed with the mode (`.../batch` or `.../stream`) to keep state isolated.
+
+---
+
+### Affected Tasks
+
+Only the **Encounters pipeline** supports this parameter:
+
+- `bronze_encounters_autoloader`
+- `silver_encounters_scd1`
+- `z_silver_encounters_enriched`
+
+All other datasets (Patients, Claims, Providers, Feedback) run in batch mode and are unaffected.
+
+---
+
+### How to set it
+
+In the Databricks Job UI:
+
+1. Open the job `KardiaFlow_Demo_FullRun`
+2. For each Encounters-related task, add a parameter:
+
+> Key: mode
+
+> Value: batch or stream
+
+You can leave the parameter out for batch tasks — they will ignore it.

@@ -49,12 +49,6 @@ resource databricks 'Microsoft.Databricks/workspaces@2024-05-01' = {
   name: databricksWorkspaceName
   location: location
   sku: {name: 'standard'}
-  tags: {
-    owner:        'KardiaFlow'
-    env:          'dev'
-    costCenter:   'data-engineering'
-    billingTier:  'minimal'
-  }
   properties: {
     managedResourceGroupId: subscriptionResourceId(
       'Microsoft.Resources/resourceGroups', managedRgName)
